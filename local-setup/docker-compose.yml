@@ -1029,6 +1029,8 @@ services:
       # with "access-control call failed". Kept in step with docker-compose.egov-digit.yaml.
       EGOV_ACCESSCONTROL_HOST: http://egov-accesscontrol:8090
       EGOV_UI_APP_HOST: http://localhost:18080
+      # Severity scoring on complaint create. Fails open, so pgr-services does not depend on it.
+      PGR_SEVERITY_URL: http://severity-service:8000
       # EscalationScheduler reads the state tenant from the keys of this map; unset, it
       # falls back to the default SLA and auto-escalation never fires.
       EGOV_UI_APP_HOST_MAP: "{pg:'http://localhost:18080'}"
@@ -1060,6 +1062,27 @@ services:
         limits:
           memory: 448M
           cpus: '0.25'
+    networks:
+      - egov-network
+
+  # Complaint severity prediction (Low/Medium/High/Critical). Standalone; Swagger at /docs.
+  severity-service:
+    build:
+      context: ../backend/severity-service
+    container_name: severity-service
+    ports:
+      - "18150:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request as u; u.urlopen('http://localhost:8000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
     networks:
       - egov-network
 

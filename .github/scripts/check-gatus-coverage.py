@@ -180,6 +180,13 @@ EXEMPT = {
     # calls Gatus's API and the OpenSRE CLI; it opens no listener, so there is
     # nothing to probe, and it being down costs diagnoses, not service.
     "opensre": "no port: diagnose-only agent loop, calls out to gatus/grafana/tempo/redpanda and listens on nothing",
+    # Complaint severity scorer (backend/severity-service). Advisory: pgr-services calls it
+    # on create with a short timeout and files the complaint without a severity if it is
+    # down, so it is not a serving dependency. Compose-only for now (no k3s manifest), and
+    # the two Gatus tiers must define identical endpoints, so a check waits for the k3s
+    # deployment and a GATUS_PROFILE_SEVERITY toggle.
+    "severity-service": "advisory scorer, fails open in pgr-services; compose-only until it has a k3s manifest and a per-tier Gatus toggle",
+
 }
 
 # Suffixes that mark generated one-shot migration containers. These are created
