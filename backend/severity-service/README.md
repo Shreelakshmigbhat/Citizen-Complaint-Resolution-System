@@ -13,7 +13,7 @@ pytest tests                            # first run downloads the encoder
 ```
 
 Docker (encoder is baked into the image): `docker compose -f local-setup/docker-compose.yml up --build severity-service`
-→ Swagger at http://localhost:18090/docs.
+→ Swagger at http://localhost:18150/docs.
 
 ## API
 

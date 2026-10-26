@@ -1071,7 +1071,7 @@ services:
       context: ../backend/severity-service
     container_name: severity-service
     ports:
-      - "18090:8000"
+      - "18150:8000"
     healthcheck:
       test: ["CMD-SHELL", "python -c \"import urllib.request as u; u.urlopen('http://localhost:8000/health')\""]
       interval: 30s
