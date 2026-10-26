@@ -1,8 +1,9 @@
 """Publish static-space/ to a FREE Hugging Face *Static* Space (no Docker, no Gradio, no server).
 
-    HF_TOKEN=hf_xxx python scripts/deploy_static_space.py <user-or-org>/<space-name> [--public]
+    HF_TOKEN=hf_xxx python scripts/deploy_static_space.py <user-or-org>/<space-name> [--private]
 
-Creates the Space (PRIVATE unless --public) and uploads the page, the JS and the exported model.
+Creates the Space (PUBLIC unless --private) and uploads the page, the JS and the exported model.
+A PRIVATE static Space does not work: the browser's requests for the page's other files get 401.
 If the model changed, regenerate it first:  python scripts/export_static_model.py
 Re-run to redeploy. Needs `pip install huggingface_hub`.
 """
@@ -19,7 +20,9 @@ def main() -> None:
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     if len(args) != 1 or "/" not in args[0]:
         sys.exit(__doc__)
-    repo_id, private = args[0], "--public" not in sys.argv
+    repo_id, private = args[0], "--private" in sys.argv
+    if private:
+        print("WARNING: private static Spaces return 401 for severity.js/model files, so the page will not work.")
     token = os.environ.get("HF_TOKEN") or sys.exit("Set HF_TOKEN to a Hugging Face token with write access")
     for needed in ("index.html", "app.js", "severity.js", "model.json", "model.bin", "README.md"):
         if not (FOLDER / needed).exists():

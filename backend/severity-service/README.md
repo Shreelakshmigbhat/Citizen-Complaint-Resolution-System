@@ -20,7 +20,7 @@ Docker (encoder is baked into the image): `docker compose -f local-setup/docker-
 A Static Space runs the model in the visitor's browser (`static-space/`; verified identical to the API).
 
 ```bash
-HF_TOKEN=hf_xxx python scripts/deploy_static_space.py <user>/ccrs-severity-app   # private; add --public to share the link
+HF_TOKEN=hf_xxx python scripts/deploy_static_space.py <user>/ccrs-severity-app   # public (a private static Space returns 401 for its own files)
 ```
 
 Re-export the model with `python scripts/export_static_model.py` if `model/catboost_pgr.cbm` changes.

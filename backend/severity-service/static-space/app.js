@@ -1,4 +1,4 @@
-import { pipeline, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1";
+const TRANSFORMERS = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1";
 import { buildModel, decide, isKnownCtype, predictProba, textForModel, DEFAULT_CTYPE } from "./severity.js";
 
 const ENCODER = "Xenova/paraphrase-multilingual-MiniLM-L12-v2";
@@ -13,8 +13,6 @@ const SAMPLES = [
 const $ = (id) => document.getElementById(id);
 const status = (msg) => { $("status").textContent = msg; };
 
-env.allowLocalModels = false;
-
 let model;
 const encoders = {}; // dtype -> Promise<extractor>
 
@@ -26,8 +24,10 @@ async function loadModel() {
   return buildModel(meta, new Float32Array(bin));
 }
 
+let lib; // transformers.js, imported on first use so a blocked CDN shows an error instead of killing the page
 function getEncoder(dtype) {
-  encoders[dtype] ??= pipeline("feature-extraction", ENCODER, {
+  encoders[dtype] ??= (lib ??= import(TRANSFORMERS).then((m) => { m.env.allowLocalModels = false; return m; }))
+    .then(({ pipeline }) => pipeline("feature-extraction", ENCODER, {
     dtype,
     progress_callback: (p) => {
       if (p.status === "progress" && typeof p.progress === "number") {
@@ -36,11 +36,12 @@ function getEncoder(dtype) {
         status(`Downloading text model (${p.file.split("/").pop()}) ${Math.round(p.progress)}%`);
       }
     },
-  }).then((e) => {
+  })).then((e) => {
     e.tokenizer.model_max_length = 128; // same truncation as training
     $("prog").hidden = true;
     return e;
   });
+  encoders[dtype].catch(() => { delete encoders[dtype]; lib = undefined; }); // allow a retry after a failure
   return encoders[dtype];
 }
 
@@ -66,6 +67,7 @@ async function score() {
   const ctype = $("ctype").value.trim() || DEFAULT_CTYPE;
   const dtype = document.querySelector('input[name="dtype"]:checked').value;
   $("go").disabled = true;
+  status("Starting...");
   try {
     status("Loading models...");
     const [m, extractor] = await Promise.all([model, getEncoder(dtype)]);
@@ -75,7 +77,7 @@ async function score() {
     status("");
   } catch (err) {
     console.error(err);
-    status(`Something went wrong: ${err.message}`);
+    status(`Something went wrong: ${err.message || err}. If this mentions the network, check that cdn.jsdelivr.net and huggingface.co are reachable.`);
   } finally {
     $("go").disabled = false;
   }
