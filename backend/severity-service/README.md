@@ -15,6 +15,14 @@ pytest tests                            # first run downloads the encoder
 Docker (encoder is baked into the image): `docker compose -f local-setup/docker-compose.yml up --build severity-service`
 → Swagger at http://localhost:18150/docs.
 
+## Publish the model to a Hugging Face model repo
+
+```bash
+HF_TOKEN=hf_xxx python deploy/huggingface-model/upload_model.py <user>/ccrs-severity-model   # private; add --public to open it
+```
+
+Uploads `catboost_pgr.cbm`, the label map, the complaint-type list, `preprocess.py` and a model card.
+
 ## Deploy to Hugging Face Spaces
 
 ```bash
