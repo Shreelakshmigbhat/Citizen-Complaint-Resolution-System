@@ -71,14 +71,6 @@ public class PGRService {
 
     private EscalationLockManager escalationLockManager;
 
-    /** Optional: absent or unconfigured means complaints are simply filed without a severity. */
-    private SeverityClient severityClient;
-
-    @Autowired(required = false)
-    public void setSeverityClient(SeverityClient severityClient) {
-        this.severityClient = severityClient;
-    }
-
     @Autowired
     public PGRService(EnrichmentService enrichmentService, UserService userService, WorkflowService workflowService,
                       ServiceRequestValidator validator, Producer producer,
@@ -125,13 +117,7 @@ public class PGRService {
 		Map<String, Object> existing = pgrUtils.extractAdditionalDetails(service.getAdditionalDetail());
 		Map<String, Object> backend = new HashMap<>();
 		backend.put("department", getDepartmentFromMDMS(request, mdmsData));
-		String serviceName = getServiceNameFromMDMS(request, mdmsData);
-		backend.put("serviceName", serviceName);
-		// Advisory severity from severity-service; any failure just leaves it out.
-		if (severityClient != null) {
-			severityClient.score(service.getServiceRequestId(), service.getDescription(), serviceName)
-					.ifPresent(s -> backend.put("severity", s));
-		}
+		backend.put("serviceName", getServiceNameFromMDMS(request, mdmsData));
 		Map<String, Object> merged = pgrUtils.deepMerge(existing, backend);
 		service.setAdditionalDetail(merged);
 
