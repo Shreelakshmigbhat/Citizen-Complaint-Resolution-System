@@ -15,6 +15,17 @@ pytest tests                            # first run downloads the encoder
 Docker (encoder is baked into the image): `docker compose -f local-setup/docker-compose.yml up --build severity-service`
 → Swagger at http://localhost:18150/docs.
 
+## Free Hugging Face deploy (no Docker, no server)
+
+A Static Space runs the model in the visitor's browser (`static-space/`; verified identical to the API).
+
+```bash
+HF_TOKEN=hf_xxx python scripts/deploy_static_space.py <user>/ccrs-severity-app   # private; add --public to share the link
+```
+
+Re-export the model with `python scripts/export_static_model.py` if `model/catboost_pgr.cbm` changes.
+This is a browser app, not an HTTP API: `pgr-services` cannot call it. Use the FastAPI service for that.
+
 ## Publish the model to a Hugging Face model repo
 
 ```bash
