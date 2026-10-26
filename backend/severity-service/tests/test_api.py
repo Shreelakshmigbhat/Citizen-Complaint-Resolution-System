@@ -55,3 +55,17 @@ def test_batch(client):
     r = client.post("/severity/batch", json={"items": items})
     assert r.status_code == 200 and len(r.json()["results"]) == 2
     assert client.post("/severity/batch", json={"items": []}).status_code == 422
+
+
+def test_api_key_enforced_when_configured(client):
+    from app.config import settings
+
+    settings.api_key = "s3cret"
+    try:
+        body = {"description": "garbage not collected"}
+        assert client.post("/severity", json=body).status_code == 401
+        assert client.post("/severity", json=body, headers={"X-API-Key": "nope"}).status_code == 401
+        assert client.post("/severity", json=body, headers={"X-API-Key": "s3cret"}).status_code == 200
+        assert client.get("/health").status_code == 200  # health stays open for probes
+    finally:
+        settings.api_key = None

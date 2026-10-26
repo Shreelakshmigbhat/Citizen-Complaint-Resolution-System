@@ -1,7 +1,10 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request
+import secrets
+
+from fastapi import Depends, FastAPI, HTTPException, Request, Security
+from fastapi.security import APIKeyHeader
 
 from .config import settings
 from .predictor import SeverityPredictor
@@ -14,6 +17,14 @@ from .schemas import (
 )
 
 logging.basicConfig(level=logging.INFO)
+
+_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+def require_api_key(key: str | None = Security(_api_key_header)) -> None:
+    expected = settings.api_key
+    if expected and not (key and secrets.compare_digest(key, expected)):
+        raise HTTPException(401, "Invalid or missing X-API-Key")
 
 
 @asynccontextmanager
@@ -40,12 +51,12 @@ def _score(request: Request, reqs: list[SeverityRequest]) -> list[SeverityRespon
     ]
 
 
-@app.post("/severity", response_model=SeverityResponse, tags=["severity"])
+@app.post("/severity", response_model=SeverityResponse, tags=["severity"], dependencies=[Depends(require_api_key)])
 def predict_severity(body: SeverityRequest, request: Request):
     return _score(request, [body])[0]
 
 
-@app.post("/severity/batch", response_model=BatchResponse, tags=["severity"])
+@app.post("/severity/batch", response_model=BatchResponse, tags=["severity"], dependencies=[Depends(require_api_key)])
 def predict_severity_batch(body: BatchRequest, request: Request):
     if len(body.items) > settings.max_batch_size:
         raise HTTPException(413, f"Batch too large (max {settings.max_batch_size})")

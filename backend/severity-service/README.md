@@ -15,6 +15,17 @@ pytest tests                            # first run downloads the encoder
 Docker (encoder is baked into the image): `docker compose -f local-setup/docker-compose.yml up --build severity-service`
 → Swagger at http://localhost:18150/docs.
 
+## Deploy to Hugging Face Spaces
+
+```bash
+HF_TOKEN=hf_xxx bash deploy/huggingface/deploy.sh <user-or-org>/ccrs-severity   # private Space; add "public" to open it
+```
+
+Needs `git` + `git-lfs` and a write token. It creates a Docker Space, pushes the service (the
+model goes through LFS) and Spaces builds the image. Then, in the Space's Settings → Variables and
+secrets, add a secret `SEVERITY_API_KEY`; with it set, `/severity*` requires an `X-API-Key` header
+(use "Authorize" in Swagger). Health stays open. The first build takes several minutes.
+
 ## API
 
 | Endpoint | Purpose |
@@ -36,7 +47,7 @@ Response: `severity`, `severity_id`, `confidence`, `probabilities`, `needs_revie
   without retraining.
 
 Config env vars (prefix `SEVERITY_`): `CRITICAL_THRESHOLD`, `REVIEW_THRESHOLD`, `MODEL_VERSION`,
-`ENCODER_PATH`, `MODEL_PATH`, `DEFAULT_CTYPE`, `MAX_BATCH_SIZE`.
+`ENCODER_PATH`, `MODEL_PATH`, `API_KEY`, `DEFAULT_CTYPE`, `MAX_BATCH_SIZE`.
 
 `model/ctype_values.json` lists the 183 complaint types seen in training. Unseen types still score
 (CatBoost treats them as an unknown category) but with less reliable results.

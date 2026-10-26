@@ -24,5 +24,9 @@ class Settings(BaseSettings):
     default_ctype: str = "Others"
     max_batch_size: int = 256
 
+    # When set, /severity and /severity/batch require this value in an X-API-Key header.
+    # Unset = open (fine on an internal network; set it on anything public).
+    api_key: str | None = None
+
 
 settings = Settings()
